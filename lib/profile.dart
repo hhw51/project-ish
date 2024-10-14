@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:red_coprative/account.dart';
+import 'package:red_coprative/login.dart';
 
 class Profilescreen extends StatefulWidget {
   const Profilescreen({super.key});
@@ -59,13 +61,21 @@ class _ProfilescreenState extends State<Profilescreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.arrow_back, color: Colors.white, size: 32),
-                  GestureDetector(
-                    onTap: () async {
-                      await FirebaseAuth.instance.signOut(); // Log out functionality
-                      Navigator.pop(context); // Return to previous screen
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 32),
+                    onPressed: () {
+                      // Navigate to the Accountscreen
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => Accountscreen()),
+                      );
                     },
-                    child: Image(image: AssetImage("assets/profilelogout.png")),
+                  ),
+                  IconButton(
+                    icon: Image.asset("assets/profilelogout.png"),
+                    onPressed: () async {
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen(),));
+                    },
                   ),
                 ],
               ),
