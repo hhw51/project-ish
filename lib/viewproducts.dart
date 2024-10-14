@@ -11,6 +11,18 @@ class ViewproductScreen extends StatefulWidget {
 }
 
 class _ViewproductScreenState extends State<ViewproductScreen> {
+  // Map to keep track of the count for each product
+  Map<int, int> itemCounts = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the counter for each product as 1 (or 0)
+    for (int i = 0; i < viewproductmodelclasslist.length; i++) {
+      itemCounts[i] = 1; // You can start with 1, or change it to 0 if needed
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,78 +77,110 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: ListTile(
-                     leading: SizedBox(
-                           height: 100,
-                            width: 80,
-                            
-                          child: Container(
-                           decoration: BoxDecoration(
-                         
-                           borderRadius: BorderRadius.circular(8),
-                                 image: DecorationImage(
-                        image: AssetImage("${viewproductmodelclasslist[index].image}"),
-                         fit: BoxFit.cover,
-                            
-      ),
-    ),
-  ),
-),
+                      leading: SizedBox(
+                        height: 100,
+                        width: 80,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: AssetImage("${viewproductmodelclasslist[index].image}"),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
                       title: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             "${viewproductmodelclasslist[index].name}",
                             style: const TextStyle(
-                              color: Colors.white, // Text color
+                              color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          Text("${viewproductmodelclasslist[index].description}",style: const TextStyle(
-                              color: Colors.white, // Text color
+                          Text(
+                            "${viewproductmodelclasslist[index].description}",
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                            ),),
-                           Row(
-                             children: [
-                               Text("${viewproductmodelclasslist[index].price}",style: const TextStyle(
-                                  color: Colors.white, // Text color
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                "\$${viewproductmodelclasslist[index].price}",
+                                style: const TextStyle(
+                                  color: Colors.white,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                ),),
-                                SizedBox(width: 20,),
-                                Icon(
-                                  Icons.blur_circular_rounded,
-                                  size: 16,
-                                  color: Color.fromARGB(255, 165, 6, 13), 
                                 ),
-                                Text("${viewproductmodelclasslist[index].points}",style: const TextStyle(
-                                  color: Colors.white, // Text color
+                              ),
+                              const SizedBox(width: 20),
+                              Icon(
+                                Icons.blur_circular_rounded,
+                                size: 16,
+                                color: const Color.fromARGB(255, 165, 6, 13),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                "${viewproductmodelclasslist[index].points} pts",
+                                style: const TextStyle(
+                                  color: Colors.white,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                ),),
-                             ],
-                           ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
-                      
-                     trailing: Column(
-                       children: [
-                         SizedBox(
-                           height: 30,
-                           width: 30,
-                           child: Image.asset(
-                             "${viewproductmodelclasslist[index].cart}", // The cart image
-                             fit: BoxFit.cover,
-                             color: Colors.amber,
-                                       ),
-                                       ),
-
-                                       
-                       ],
-                     ),
-                             ),
-                    
+                      // Trailing: Add to cart button
+                      trailing: Image.asset(
+                        "assets/Add to cart.png",
+                        width: 40,
+                        height: 40,
+                        color: Colors.amber,
+                      ),
+                      subtitle: Row(
+                        mainAxisAlignment: MainAxisAlignment.start, // Align the buttons to the right
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                if (itemCounts[index]! > 1) {
+                                  itemCounts[index] = itemCounts[index]! - 1;
+                                }
+                              });
+                            },
+                          ),
+                          Text(
+                            "${itemCounts[index]}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, color: Colors.green, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                itemCounts[index] = itemCounts[index]! + 1;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
