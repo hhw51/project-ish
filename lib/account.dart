@@ -1,7 +1,9 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'package:flutter/material.dart';
+import 'package:red_coprative/feeds.dart';
 import 'package:red_coprative/models/accountgridmodelclass.dart';
+import 'package:red_coprative/viewproducts.dart';
 
 class Accountscreen extends StatefulWidget {
   const Accountscreen({super.key});
@@ -21,12 +23,21 @@ class _AccountscreenState extends State<Accountscreen> {
         child: Column(
           children: [
             // Top section with app name and QR code icon
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                 Icon(Icons.arrow_back,color: Colors.white,size: 32,),
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 32),
+                    onPressed: () {
+                      // Navigate to the Accountscreen
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => Feedsscreen()),
+                      );
+                    },
+                  ),
                   Icon(
                     Icons.qr_code_scanner_sharp,
                     size: 28,
@@ -195,33 +206,56 @@ class _AccountscreenState extends State<Accountscreen> {
             ),
 
                                    // GridView with Expanded
-            Expanded(
-              child: GridView.builder(
-                padding: EdgeInsets.symmetric(vertical: 2), 
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, 
-                  crossAxisSpacing: 15, 
-                  mainAxisSpacing: 1, 
+           Expanded(
+  child: Container(
+    margin: EdgeInsets.symmetric(horizontal: 10),
+    child: GridView.builder(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 15,
+        mainAxisSpacing: 1,
+      ),
+      itemCount: accountgridmodelclasslist.length,
+      itemBuilder: (context, index) {
+        return InkWell(
+          onTap: () {
+            if (accountgridmodelclasslist[index].text == "View Products") {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ViewproductScreen(),
                 ),
-                itemCount: accountgridmodelclasslist.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                  padding: EdgeInsets.symmetric(vertical: 25),
-                  margin: EdgeInsets.symmetric(vertical: 25),
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(38, 255, 255, 255),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      children: [
-                        Image.asset("${accountgridmodelclasslist[index].image}"),
-                        Text("${accountgridmodelclasslist[index].text}",style: TextStyle(fontSize: 15,color: Colors.white),)
-                      ],
-                    ),
-                  );
-                },
-              ),
+              );
+            } else {
+              print("Grid item ${accountgridmodelclasslist[index].text} clicked");
+            }
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 25),
+            margin: EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(38, 255, 255, 255),
+              borderRadius: BorderRadius.circular(20),
             ),
+            child: Column(
+              children: [
+                Image.asset(
+                  "${accountgridmodelclasslist[index].image}",
+                ),
+                Text(
+                  "${accountgridmodelclasslist[index].text}",
+                  style: TextStyle(fontSize: 15, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ),
+  ),
+),
+
           ],
         ),
       ),

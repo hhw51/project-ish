@@ -21,30 +21,36 @@ class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Method to handle login
-  Future<void> _login() async {
-    try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+Future<void> _login() async {
+  try {
+    UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
 
-      // Navigate to the dashboard on successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const Dashboardscreen(),
-        ),
-      );
-    } on FirebaseAuthException catch (e) {
-      // Show error message if login fails
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message ?? 'An error occurred'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    // Access user info if needed
+    User? user = userCredential.user;
+    if (user != null) {
+      print('Logged in as: ${user.email}');
     }
+
+    // Navigate to the dashboard on successful login
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const Dashboardscreen(),
+      ),
+    );
+  } on FirebaseAuthException catch (e) {
+    // Show error message if login fails
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.message ?? 'An error occurred'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
