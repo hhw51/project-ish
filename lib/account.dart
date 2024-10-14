@@ -239,6 +239,7 @@ class _AccountscreenState extends State<Accountscreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
+              
               children: [
                 Image.asset(
                   "${accountgridmodelclasslist[index].image}",

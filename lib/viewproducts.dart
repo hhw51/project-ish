@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:red_coprative/account.dart';
 import 'package:red_coprative/login.dart';
+import 'package:red_coprative/models/viewproductmodelclass.dart';
 
 class ViewproductScreen extends StatefulWidget {
   const ViewproductScreen({super.key});
@@ -15,45 +16,134 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Container(
-        padding: EdgeInsets.symmetric(horizontal: 6),
-        margin: EdgeInsets.only(top: 25),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        margin: const EdgeInsets.only(top: 20),
         child: Column(
           children: [
-            // Top section with app name and logout icon
+            // Top section with back and logout icons
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 32),
+                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                     onPressed: () {
-                      // Navigate to the Accountscreen
+                      // Navigate back to the Account screen
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => Accountscreen()),
+                        MaterialPageRoute(builder: (context) => const Accountscreen()),
                       );
                     },
                   ),
                   IconButton(
                     icon: Image.asset("assets/profilelogout.png"),
                     onPressed: () async {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen(),));
+                      // Handle logout
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],
               ),
             ),
-            ListView.builder(itemBuilder: (context, index) {
-              return ListTile(
-                leading: Container(
-                  decoration: BoxDecoration(image: DecorationImage(image: AssetImage("${vi}"))),
-                )
-              );
-            },)
-         ]
-       )
-      )
+
+            // Expanded widget to allow the ListView to take available space
+            Expanded(
+              child: ListView.builder(
+                itemCount: viewproductmodelclasslist.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[900], // Background color for each item
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ListTile(
+                     leading: SizedBox(
+                           height: 100,
+                            width: 80,
+                            
+                          child: Container(
+                           decoration: BoxDecoration(
+                         
+                           borderRadius: BorderRadius.circular(8),
+                                 image: DecorationImage(
+                        image: AssetImage("${viewproductmodelclasslist[index].image}"),
+                         fit: BoxFit.cover,
+                            
+      ),
+    ),
+  ),
+),
+                      title: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${viewproductmodelclasslist[index].name}",
+                            style: const TextStyle(
+                              color: Colors.white, // Text color
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text("${viewproductmodelclasslist[index].description}",style: const TextStyle(
+                              color: Colors.white, // Text color
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),),
+                           Row(
+                             children: [
+                               Text("${viewproductmodelclasslist[index].price}",style: const TextStyle(
+                                  color: Colors.white, // Text color
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),),
+                                SizedBox(width: 20,),
+                                Icon(
+                                  Icons.blur_circular_rounded,
+                                  size: 16,
+                                  color: Color.fromARGB(255, 165, 6, 13), 
+                                ),
+                                Text("${viewproductmodelclasslist[index].points}",style: const TextStyle(
+                                  color: Colors.white, // Text color
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),),
+                             ],
+                           ),
+                        ],
+                      ),
+                      
+                     trailing: Column(
+                       children: [
+                         SizedBox(
+                           height: 30,
+                           width: 30,
+                           child: Image.asset(
+                             "${viewproductmodelclasslist[index].cart}", // The cart image
+                             fit: BoxFit.cover,
+                             color: Colors.amber,
+                                       ),
+                                       ),
+
+                                       
+                       ],
+                     ),
+                             ),
+                    
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
