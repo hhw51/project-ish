@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:red_coprative/account.dart';
-import 'package:red_coprative/login.dart';
-import 'package:red_coprative/models/viewproductmodelclass.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+
+import 'account.dart';
+import 'login.dart';
 
 class ViewproductScreen extends StatefulWidget {
   const ViewproductScreen({super.key});
@@ -11,16 +14,22 @@ class ViewproductScreen extends StatefulWidget {
 }
 
 class _ViewproductScreenState extends State<ViewproductScreen> {
-  // Map to keep track of the count for each product
-  Map<int, int> itemCounts = {};
+  final CollectionReference productsCollection = FirebaseFirestore.instance.collection('cart_data');
 
-  @override
-  void initState() {
-    super.initState();
-    // Initialize the counter for each product as 1 (or 0)
-    for (int i = 0; i < viewproductmodelclasslist.length; i++) {
-      itemCounts[i] = 1; // You can start with 1, or change it to 0 if needed
+  Future<String> getDownloadUrl(String gsUrl) async {
+    try {
+      Reference ref = FirebaseStorage.instance.refFromURL(gsUrl);
+      String downloadUrl = await ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print("Error fetching download URL: $e");
+      return '';
     }
+  }
+
+  int calculatePoints(int price, int quantity) {
+    int pointsPerItem = (price / 1000).floor();
+    return pointsPerItem * quantity;
   }
 
   @override
@@ -32,7 +41,6 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
         margin: const EdgeInsets.only(top: 20),
         child: Column(
           children: [
-            // Top section with back and logout icons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -41,7 +49,6 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                     onPressed: () {
-                      // Navigate back to the Account screen
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (context) => const Accountscreen()),
@@ -51,7 +58,6 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
                   IconButton(
                     icon: Image.asset("assets/profilelogout.png"),
                     onPressed: () async {
-                      // Handle logout
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -63,124 +69,38 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
                 ],
               ),
             ),
-
-            // Expanded widget to allow the ListView to take available space
             Expanded(
-              child: ListView.builder(
-                itemCount: viewproductmodelclasslist.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 10),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900], // Background color for each item
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ListTile(
-                      leading: SizedBox(
-                        height: 100,
-                        width: 80,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: AssetImage("${viewproductmodelclasslist[index].image}"),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: productsCollection.snapshots(),
+                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        "Error: ${snapshot.error}",
+                        style: const TextStyle(color: Colors.white),
                       ),
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "${viewproductmodelclasslist[index].name}",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            "${viewproductmodelclasslist[index].description}",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "\$${viewproductmodelclasslist[index].price}",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                              Icon(
-                                Icons.blur_circular_rounded,
-                                size: 16,
-                                color: const Color.fromARGB(255, 165, 6, 13),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                "${viewproductmodelclasslist[index].points} pts",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      // Trailing: Add to cart button
-                      trailing: Image.asset(
-                        "assets/Add to cart.png",
-                        width: 40,
-                        height: 40,
-                        color: Colors.amber,
-                      ),
-                      subtitle: Row(
-                        mainAxisAlignment: MainAxisAlignment.start, // Align the buttons to the right
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
-                            onPressed: () {
-                              setState(() {
-                                if (itemCounts[index]! > 1) {
-                                  itemCounts[index] = itemCounts[index]! - 1;
-                                }
-                              });
-                            },
-                          ),
-                          Text(
-                            "${itemCounts[index]}",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.green, size: 20),
-                            onPressed: () {
-                              setState(() {
-                                itemCounts[index] = itemCounts[index]! + 1;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                    );
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  var products = snapshot.data!.docs;
+
+                  if (products.isEmpty) {
+                    return const Center(child: Text("No products available", style: TextStyle(color: Colors.white)));
+                  }
+
+                  return ListView.builder(
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      var product = products[index];
+                      return ProductItem(
+                        product: product,
+                        getDownloadUrl: getDownloadUrl,
+                        calculatePoints: calculatePoints,
+                      );
+                    },
                   );
                 },
               ),
@@ -188,6 +108,200 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class ProductItem extends StatefulWidget {
+  final QueryDocumentSnapshot product;
+  final Future<String> Function(String) getDownloadUrl;
+  final int Function(int, int) calculatePoints;
+
+  const ProductItem({
+    Key? key,
+    required this.product,
+    required this.getDownloadUrl,
+    required this.calculatePoints,
+  }) : super(key: key);
+
+  @override
+  _ProductItemState createState() => _ProductItemState();
+}
+
+class _ProductItemState extends State<ProductItem> {
+  int quantity = 1; // Local state for each product
+
+  @override
+  Widget build(BuildContext context) {
+    int availableQuantity = widget.product['quantity'];
+    int price = widget.product['price'];
+    String gsUrl = widget.product['imageUrl'];
+
+    int totalPoints = widget.calculatePoints(price, quantity);
+
+    return FutureBuilder<String>(
+      future: widget.getDownloadUrl(gsUrl),
+      builder: (context, AsyncSnapshot<String> downloadSnapshot) {
+        if (downloadSnapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (downloadSnapshot.hasError || !downloadSnapshot.hasData || downloadSnapshot.data!.isEmpty) {
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.error, color: Colors.red, size: 50),
+              title: Text(
+                widget.product['name'],
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: const Text(
+                "Failed to load image",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          );
+        }
+
+        String downloadUrl = downloadSnapshot.data!;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: ListTile(
+            leading: SizedBox(
+              height: 100,
+              width: 80,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: downloadUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                  errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.red),
+                ),
+              ),
+            ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.product['name'],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  widget.product['description'],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Row(
+                  children: [
+                    Text(
+                      "\$${widget.product['price']}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(
+                      Icons.blur_circular_rounded,
+                      size: 16,
+                      color: Color.fromARGB(255, 165, 6, 13),
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      "$totalPoints pts",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            trailing: Image.asset(
+              "assets/Add to cart.png",
+              width: 40,
+              height: 40,
+              color: Colors.amber,
+            ),
+            subtitle: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
+                  onPressed: () {
+                    if (quantity > 1) {
+                      setState(() {
+                        quantity--;
+                      });
+                    }
+                  },
+                ),
+                Text(
+                  "$quantity",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline, color: Colors.green, size: 20),
+                  onPressed: () {
+                    if (quantity < availableQuantity) {
+                      setState(() {
+                        quantity++;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -29,16 +29,23 @@ class _CartScreenState extends State<CartScreen> {
   // Example list of cart items with dummy data
   List<CartItem> cartItems = [
     CartItem(
-      imageUrl: 'assets/technology.jpg',
+      imageUrl: 'assets/Kid.png',
       name: 'Wireless Mouse',
       description: 'A high-quality wireless mouse with ergonomic design.',
       price: 25.99,
       quantity: 1,
       points: 120,
     ),
-    
     CartItem(
-      imageUrl: 'assets/technology.jpg',
+      imageUrl: 'assets/technology (1).png',
+      name: 'Gaming Headset',
+      description: 'A surround-sound gaming headset with a built-in microphone.',
+      price: 49.99,
+      quantity: 2,
+      points: 300,
+    ),
+    CartItem(
+      imageUrl: 'assets/Kid.png',
       name: 'Mechanical Keyboard',
       description: 'A mechanical keyboard with RGB lighting and tactile feedback.',
       price: 89.99,
@@ -46,7 +53,7 @@ class _CartScreenState extends State<CartScreen> {
       points: 450,
     ),
     CartItem(
-      imageUrl: 'assets/technology.jpg',
+      imageUrl: 'assets/Kid.png',
       name: 'USB-C Hub',
       description: 'A multi-port USB-C hub for connecting various devices.',
       price: 39.99,
@@ -54,7 +61,7 @@ class _CartScreenState extends State<CartScreen> {
       points: 200,
     ),
     CartItem(
-      imageUrl: 'assets/technology.jpg',
+      imageUrl: 'assets/Kid.png',
       name: 'Portable SSD',
       description: 'A 1TB portable SSD with fast read and write speeds.',
       price: 129.99,
@@ -101,11 +108,10 @@ class _CartScreenState extends State<CartScreen> {
                     borderRadius: BorderRadius.circular(20), // Border radius
                   ),
                   child: ListTile(
-                    leading: Image.asset(
+                    leading: Image.network(
                       item.imageUrl,
                       width: 50,
                       height: 50,
-                      
                       fit: BoxFit.cover,
                     ),
                     title: Text(

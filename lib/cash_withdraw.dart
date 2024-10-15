@@ -1,7 +1,4 @@
-// ignore_for_file: prefer_const_constructors, avoid_print, prefer_const_literals_to_create_immutables
-
 import 'package:flutter/material.dart';
-import 'package:red_coprative/account.dart';
 
 class CashWithdrawScreen extends StatefulWidget {
   const CashWithdrawScreen({super.key});
@@ -14,14 +11,15 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
   final TextEditingController _accountTitleController = TextEditingController();
   final TextEditingController _mobileNumberController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
-
-  String? _accountType; // To track selected account type
+  String _selectedAccountType = 'JazzCash'; // Default selected option
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 94, 156, 70),
-      body: Container(
+      backgroundColor: const Color.fromARGB(255, 30, 30, 30),
+      resizeToAvoidBottomInset: true, // Allow screen to resize when keyboard appears
+      body: SingleChildScrollView( // Allows the screen to scroll when content is too large
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         child: Column(
           children: [
             // Top section with app name and QR code icon
@@ -29,16 +27,12 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white, size: 32),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                   onPressed: () {
-                    // Navigate to the Account screen
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => Accountscreen()),
-                    );
+                    Navigator.pop(context);
                   },
                 ),
-                Icon(
+                const Icon(
                   Icons.qr_code_scanner_sharp,
                   size: 28,
                   color: Colors.white,
@@ -46,34 +40,45 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
               ],
             ),
 
+            const SizedBox(height: 20),
+            
             // Wallet balance section
             Container(
               width: double.infinity,
               height: 210,
-              decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 165, 6, 13),
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 19, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       "Cash Wallet",
                       style: TextStyle(fontSize: 15, color: Colors.white),
                     ),
                     Row(
-                      children: [
+                      children: const [
                         Text(
                           "Rs",
-                          style: TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 32,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
                         ),
                         SizedBox(width: 2),
                         Text(
                           "1599",
-                          style: TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 32,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
-                    SizedBox(height: 58), // Reduced height for better spacing
+                    const SizedBox(height: 50), // Adjusted for better spacing
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -92,7 +97,7 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
                           },
                         ),
                         _buildSmallButton(
-                          icon: Icons.history,
+                          icon: Icons.contact_page,
                           label: "View History",
                           onPressed: () {
                             print('Viewing account history...');
@@ -105,131 +110,95 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
               ),
             ),
 
-            SizedBox(height: 20), // Added spacing before "Withdraw Cash" text
-            Text(
+            const SizedBox(height: 20),
+
+            const Text(
               "Withdraw Cash",
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
             ),
 
-            // Account Title TextField
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Account Title",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  TextField(
-                    controller: _accountTitleController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10), // Set radius here
-                        borderSide: BorderSide.none,
-                      ),
-                      floatingLabelBehavior: FloatingLabelBehavior.always, // Make label float above
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 20),
+
+            // Account Title
+            _buildTextField(
+              controller: _accountTitleController,
+              label: 'Account Title',
+              hintText: 'eg Ahmad Hassan',
+            ),
+
+            const SizedBox(height: 10),
+
+            // Mobile Number
+            _buildTextField(
+              controller: _mobileNumberController,
+              label: 'Mobile Number',
+              hintText: '0300 1234567',
+              keyboardType: TextInputType.phone,
+            ),
+
+            const SizedBox(height: 10),
+
+            // Account Type Label
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Account Type',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
 
-            // Mobile Number TextField
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Mobile Number",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  TextField(
-                    controller: _mobileNumberController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10), // Set radius here
-                        borderSide: BorderSide.none,
-                      ),
-                      floatingLabelBehavior: FloatingLabelBehavior.always, // Make label float above
-                    ),
-                    keyboardType: TextInputType.phone, // Phone keyboard for mobile number
-                  ),
-                ],
-              ),
+            const SizedBox(height: 10),
+
+            // Account Type with Radio Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildAccountTypeOption('EasyPaisa'),
+                const SizedBox(width: 20),
+                _buildAccountTypeOption('JazzCash'),
+              ],
             ),
 
-            // Account Type Row with Easypaisa and JazzCash options
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _accountType = "Easypaisa";
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _accountType == "Easypaisa" ? Colors.red : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red),
-                      ),
-                      child: Text("Easypaisa", style: TextStyle(color: Colors.red)),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _accountType = "JazzCash";
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _accountType == "JazzCash" ? Colors.red : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red),
-                      ),
-                      child: Text("JazzCash", style: TextStyle(color: Colors.red)),
-                    ),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 10),
+
+            // Amount
+            _buildTextField(
+              controller: _amountController,
+              label: 'Amount (Rs)',
+              hintText: 'eg 1200',
+              keyboardType: TextInputType.number,
             ),
 
-            // Amount TextField
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Amount",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  TextField(
-                    controller: _amountController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10), // Set radius here
-                        borderSide: BorderSide.none,
-                      ),
-                      floatingLabelBehavior: FloatingLabelBehavior.always, // Make label float above
-                    ),
-                    keyboardType: TextInputType.number, // Numeric keyboard for amount
-                  ),
-                ],
+            const SizedBox(height: 20),
+
+            // Withdraw Button
+            ElevatedButton(
+              onPressed: () {
+                final accountTitle = _accountTitleController.text;
+                final mobileNumber = _mobileNumberController.text;
+                final amount = _amountController.text;
+
+                if (accountTitle.isNotEmpty && mobileNumber.isNotEmpty && amount.isNotEmpty) {
+                  print('Withdrawing Rs. $amount via $_selectedAccountType');
+                } else {
+                  print('Please fill in all fields.');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 165, 6, 13),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Withdraw Cash',
+                style: TextStyle(fontSize: 16, color: Colors.white),
               ),
             ),
           ],
@@ -238,21 +207,89 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
     );
   }
 
+  // Helper method to create text fields
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hintText,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white),
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Colors.grey),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.white),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color:  Color.fromARGB(255, 165, 6, 13),),
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to create account type options
+  Widget _buildAccountTypeOption(String type) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedAccountType = type;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: _selectedAccountType == type ? Colors.red : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.red),
+        ),
+        child: Row(
+          children: [
+            Text(
+              type,
+              style: TextStyle(
+                color: _selectedAccountType == type ? Colors.white : Colors.red,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Icon(
+              Icons.circle,
+              color: _selectedAccountType == type ? Colors.white : Colors.red,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Helper method to create smaller buttons
-  Widget _buildSmallButton({required IconData icon, required String label, required VoidCallback onPressed}) {
+  Widget _buildSmallButton(
+      {required IconData icon, required String label, required VoidCallback onPressed}) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10), // Smaller padding
         backgroundColor: Colors.white, // Button background color
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
       ),
       child: Row(
         children: [
           Icon(icon, color: Colors.red, size: 18), // Smaller icon
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Text(
             label,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold), // Smaller text size
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red),
           ),
         ],
       ),

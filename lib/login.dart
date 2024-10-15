@@ -34,26 +34,21 @@ class _LoginScreenState extends State<LoginScreen> {
         print('Logged in as: ${user.email}');
       }
 
-      // Check if the widget is still mounted before navigating
-      if (mounted) {
-        // Navigate to the dashboard on successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const Dashboardscreen(),
-          ),
-        );
-      }
+      // Navigate to the dashboard on successful login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const Dashboardscreen(),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
       // Show error message if login fails
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'An error occurred'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? 'An error occurred'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -67,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 130),
+              const SizedBox(height: 50),
               Image.asset(
                 'assets/Logo.png',
                 height: 100,
