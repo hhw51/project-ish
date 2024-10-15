@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -33,7 +35,7 @@ class _ProfilescreenState extends State<Profilescreen> {
             .collection('users')
             .doc(user.uid) // Use UID to identify the user's document
             .get();
-
+log('doc $doc');
         // Check if the document exists and contains data
         if (doc.exists) {
           setState(() {

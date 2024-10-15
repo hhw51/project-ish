@@ -1,6 +1,8 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'package:flutter/material.dart';
+import 'package:red_coprative/cart_items.dart';
+import 'package:red_coprative/cash_withdraw.dart';
 import 'package:red_coprative/feeds.dart';
 import 'package:red_coprative/models/accountgridmodelclass.dart';
 import 'package:red_coprative/viewproducts.dart';
@@ -140,31 +142,38 @@ class _AccountscreenState extends State<Accountscreen> {
               child: Row(
                 children: [
                   // Cash Withdraw button
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade900, 
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(10),
-                        ), 
-                      ),
-                      child: TextButton(
-                        onPressed: () {},
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                        ),
-                        child: const Text(
-                          "Cash Withdraw",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                 
+                 Expanded(
+  child: Container(
+    decoration: BoxDecoration(
+      color: Colors.red.shade900, 
+      borderRadius: BorderRadius.only(
+        bottomLeft: Radius.circular(10),
+      ), 
+    ),
+    child: TextButton(
+      onPressed: () {
+        // Navigate to CashWithdrawScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CashWithdrawScreen(), // Update this line
+          ),
+        );
+      },
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 15),
+      ),
+      child: const Text(
+        "Cash Withdraw",
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ),
+),
                   Container(
                     height: 45, 
                     width: 1,
@@ -216,22 +225,27 @@ class _AccountscreenState extends State<Accountscreen> {
         crossAxisSpacing: 15,
         mainAxisSpacing: 1,
       ),
-      itemCount: accountgridmodelclasslist.length,
-      itemBuilder: (context, index) {
-        return InkWell(
-          onTap: () {
-            if (accountgridmodelclasslist[index].text == "View Products") {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ViewproductScreen(),
-                ),
-              );
-            } else {
-              print("Grid item ${accountgridmodelclasslist[index].text} clicked");
-            }
-          },
-          child: Container(
+        itemCount: accountgridmodelclasslist.length,
+                  itemBuilder: (context, index) {
+                    return InkWell(
+                      onTap: () {
+                        if (accountgridmodelclasslist[index].text == "View Products") {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ViewproductScreen(),
+                            ),
+                          );
+                        } else if (accountgridmodelclasslist[index].text == "Popular Products") {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CartScreen(),
+                            ),
+                          );
+                        }
+                      },
+                      child: Container(
             padding: EdgeInsets.symmetric(vertical: 25),
             margin: EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
