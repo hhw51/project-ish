@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:red_coprative/cash_withdraw.dart';
+import 'package:red_coprative/history.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -185,11 +187,13 @@ class _HomescreenState extends State<Homescreen> {
                           color: Colors.red.shade900, // Same red color
                           borderRadius:const BorderRadius.only(
                             bottomLeft: Radius.circular(10),
-                            topLeft: Radius.circular(10), // Rounded left corners
+                           
                           ),
                         ),
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => CashWithdrawScreen(),));
+                          },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
@@ -217,11 +221,13 @@ class _HomescreenState extends State<Homescreen> {
                           color: Colors.red.shade900, // Same red color
                           borderRadius:const BorderRadius.only(
                             bottomRight: Radius.circular(10),
-                            topRight: Radius.circular(10), // Rounded right corners
+                            
                           ),
                         ),
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => Historyscreen(),));
+                          },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),

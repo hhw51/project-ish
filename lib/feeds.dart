@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:red_coprative/cash_withdraw.dart';
+import 'package:red_coprative/history.dart';
 
 class Feedsscreen extends StatefulWidget {
   const Feedsscreen({super.key});
@@ -184,7 +186,9 @@ class _FeedsscreenState extends State<Feedsscreen> {
                           ), // Rounded left corners
                         ),
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => CashWithdrawScreen(),));
+                          },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
@@ -216,7 +220,9 @@ class _FeedsscreenState extends State<Feedsscreen> {
                           ), // Rounded right corners
                         ),
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => Historyscreen(),));
+                          },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
