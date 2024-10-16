@@ -1,10 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:red_coprative/account.dart';
-import 'package:red_coprative/constant/static_veriable.dart';
 import 'package:red_coprative/feeds.dart';
 import 'package:red_coprative/homescreen.dart';
 import 'package:red_coprative/profile.dart';
@@ -17,7 +14,7 @@ class Dashboardscreen extends StatefulWidget {
 }
 
 class _DashboardscreenState extends State<Dashboardscreen> {
-  // int currentIndex = 0;
+  int currentIndex = 0;
   PageController pageController = PageController(initialPage: 0);
 
   // Pages to be displayed in PageView
@@ -30,19 +27,15 @@ class _DashboardscreenState extends State<Dashboardscreen> {
 
   @override
   Widget build(BuildContext context) {
-    log('current index ${StaticVeriable.currentPageIndex}');
     return Scaffold(
       // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
-        
-        currentIndex: StaticVeriable.currentPageIndex,
-        
+        currentIndex: currentIndex,
         onTap: (value) {
           setState(() {
-            StaticVeriable.currentPageIndex = value;
-          
+            currentIndex = value;
           });
-                   // pageController.jumpToPage(currentIndex);
+                      // pageController.jumpToPage(currentIndex);
 
         },
         selectedItemColor: Colors.red,  // Color when selected
@@ -54,7 +47,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
             icon: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: StaticVeriable.currentPageIndex == 0 ? Colors.red : Colors.transparent,
+                color: currentIndex == 0 ? Colors.red : Colors.transparent,
               ),
               padding: EdgeInsets.all(8),
               child: Image.asset(
@@ -70,7 +63,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
             icon: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: StaticVeriable.currentPageIndex == 1 ? Colors.red : Colors.transparent,
+                color: currentIndex == 1 ? Colors.red : Colors.transparent,
               ),
               padding: EdgeInsets.all(8),
               child: Text("F",style: TextStyle(fontSize: 20,color: Colors.white,fontWeight: FontWeight.bold),)
@@ -81,7 +74,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
             icon: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: StaticVeriable.currentPageIndex == 2 ? Colors.red : Colors.transparent,
+                color: currentIndex == 2 ? Colors.red : Colors.transparent,
               ),
               padding: EdgeInsets.all(8),
               child: Image.asset(
@@ -97,7 +90,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
             icon: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: StaticVeriable.currentPageIndex == 3 ? Colors.red : Colors.transparent,
+                color: currentIndex == 3 ? Colors.red : Colors.transparent,
               ),
               padding: EdgeInsets.all(8),
               child: Image.asset(
@@ -114,7 +107,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
 
       // Body of the page to show the pages in PageView
       body:
-         pages[StaticVeriable.currentPageIndex],
+         pages[currentIndex],
       //  PageView(
       //   controller: pageController,
       //   onPageChanged: (value) {
@@ -124,7 +117,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
       //   },
       //   children: pages,
       // ),
-     
+    
     );
   }
 }

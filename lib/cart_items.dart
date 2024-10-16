@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:red_coprative/account.dart';
@@ -60,7 +62,7 @@ class _CartScreenState extends State<CartScreen> {
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.pop(
                           context,
                           MaterialPageRoute(builder: (context) => const Accountscreen()),
                         );

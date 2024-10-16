@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:red_coprative/account.dart';
 
@@ -37,7 +39,7 @@ class _HistoryscreenState extends State<Historyscreen> {
                     icon:const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                     onPressed: () {
                       // Navigate to the Accountscreen
-                      Navigator.pushReplacement(
+                      Navigator.pop(
                         context,
                         MaterialPageRoute(builder: (context) => Accountscreen()),
                       );

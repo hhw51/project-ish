@@ -1,8 +1,10 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously, use_super_parameters
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'cart_items.dart'; // Import the CartScreen
+// import 'cart_items.dart'; // Import the CartScreen
 import 'account.dart';
 import 'login.dart';
 
@@ -86,7 +88,7 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                     onPressed: () {
-                      Navigator.pushReplacement(
+                      Navigator.pop(
                         context,
                         MaterialPageRoute(builder: (context) => const Accountscreen()),
                       );
