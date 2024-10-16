@@ -289,7 +289,11 @@ class _ProductItemState extends State<ProductItem> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: ListTile(
-              leading: SizedBox(
+              // Adjust the content padding to move items inside the ListTile
+              contentPadding: const EdgeInsets.only(left: 0, right: 8.0), // Adjust padding inside the ListTile to move leading left
+
+              leading: Container(
+                padding: const EdgeInsets.only(left: 0), // No need for margin, adjust padding
                 height: 100,
                 width: 80,
                 child: ClipRRect(
@@ -335,7 +339,7 @@ class _ProductItemState extends State<ProductItem> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 5),
                       const Icon(
                         Icons.blur_circular_rounded,
                         size: 16,
@@ -357,15 +361,18 @@ class _ProductItemState extends State<ProductItem> {
                   ),
                 ],
               ),
-              // Add to Cart button
-              trailing: IconButton(
-                icon: const Icon(Icons.add_shopping_cart, color: Colors.amber),
-                onPressed: () {
-                  // Calculate points before adding to cart
-                  int points = widget.calculatePoints(widget.product['price'], quantity);
+              
+              // Add to Cart button (trailing) - Move more to the left
+              trailing: Container(
+                margin: const EdgeInsets.only(right: 0), // Adjust the margin to move the icon more to the left
+                child: IconButton(
+                  icon: const Icon(Icons.add_shopping_cart, color: Colors.amber),
+                  onPressed: () {
+                    // Calculate points before adding to cart
+                    int points = widget.calculatePoints(widget.product['price'], quantity);
 
-                  // Call the addToCart function with product details, points, and imageUrl
-                  widget.addToCart(
+                    // Call the addToCart function with product details, points, and imageUrl
+                    widget.addToCart(
                       widget.product.id,              // Product ID
                       widget.product['name'],          // Product name
                       widget.product['description'],   // Product description
@@ -373,8 +380,9 @@ class _ProductItemState extends State<ProductItem> {
                       quantity,                        // Quantity
                       points,                          // Calculated points
                       downloadUrl                      // Image URL
-                  );
-                },
+                    );
+                  },
+                ),
               ),
               // Quantity controls
               subtitle: Row(
