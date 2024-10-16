@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:red_coprative/cash_withdraw.dart';
 import 'package:red_coprative/feeds.dart';
+import 'package:red_coprative/history.dart';
 import 'package:red_coprative/models/accountgridmodelclass.dart';
 import 'package:red_coprative/viewproducts.dart';
 import 'cart_items.dart';
@@ -220,7 +221,9 @@ class _AccountscreenState extends State<Accountscreen> {
                         ),
                       ),
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => Historyscreen(),));
+                        },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),

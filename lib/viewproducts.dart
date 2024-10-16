@@ -241,19 +241,22 @@ class _ProductItemState extends State<ProductItem> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 7),
                     const Icon(
                       Icons.blur_circular_rounded,
                       size: 16,
                       color: Color.fromARGB(255, 165, 6, 13),
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      "$totalPoints pts",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(width: 1),
+                    Flexible(
+                      child: Text(
+                        "$totalPoints pts",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis, // Prevents overflow
                       ),
                     ),
                   ],

@@ -1,11 +1,16 @@
+
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:red_coprative/account.dart';
+import 'package:red_coprative/constant/static_veriable.dart';
 import 'package:red_coprative/login.dart';
 
 class Profilescreen extends StatefulWidget {
-  const Profilescreen({super.key});
+  int? index;
+ Profilescreen({super.key,this.index});
 
   @override
   State<Profilescreen> createState() => _ProfilescreenState();
@@ -64,11 +69,17 @@ class _ProfilescreenState extends State<Profilescreen> {
                   IconButton(
                     icon:const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                     onPressed: () {
+                      log('cureent pag e${StaticVeriable.currentPageIndex}');
+                        setState(() {
+                      StaticVeriable.currentPageIndex = 2;
+                    });
+                    // Navigator.of(context).pop(); 
+                  
                       // Navigate to the Accountscreen
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => Accountscreen()),
-                      );
+                      // Navigator.pushReplacement(
+                      //   context,
+                      //   MaterialPageRoute(builder: (context) => Accountscreen()),
+                      // );
                     },
                   ),
                   IconButton(

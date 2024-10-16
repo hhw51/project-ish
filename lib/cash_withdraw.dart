@@ -12,13 +12,14 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
   final TextEditingController _mobileNumberController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   String _selectedAccountType = 'JazzCash'; // Default selected option
+  double _walletBalance = 1599.0; // Storing the wallet balance here
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 30, 30, 30),
       resizeToAvoidBottomInset: true, // Allow screen to resize when keyboard appears
-      body: SingleChildScrollView( // Allows the screen to scroll when content is too large
+      body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         child: Column(
           children: [
@@ -39,9 +40,8 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
-            
+
             // Wallet balance section
             Container(
               width: double.infinity,
@@ -60,18 +60,18 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
                       style: TextStyle(fontSize: 15, color: Colors.white),
                     ),
                     Row(
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           "Rs",
                           style: TextStyle(
                               fontSize: 32,
                               color: Colors.white,
                               fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(width: 2),
+                        const SizedBox(width: 2),
                         Text(
-                          "1599",
-                          style: TextStyle(
+                          _walletBalance.toString(), // Use the variable here
+                          style: const TextStyle(
                               fontSize: 32,
                               color: Colors.white,
                               fontWeight: FontWeight.bold),
@@ -109,7 +109,6 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
 
             const Text(
@@ -117,88 +116,111 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
             ),
-
             const SizedBox(height: 20),
 
-            // Account Title
-            _buildTextField(
-              controller: _accountTitleController,
-              label: 'Account Title',
-              hintText: 'eg Ahmad Hassan',
-            ),
+            // Withdraw Form
+            Form(
+              child: Column(
+                children: [
+                  // Account Title
+                  _buildTextField(
+                    controller: _accountTitleController,
+                    label: 'Account Title',
+                    hintText: 'eg Ahmad Hassan',
+                  ),
+                  const SizedBox(height: 10),
 
-            const SizedBox(height: 10),
+                  // Mobile Number
+                  _buildTextField(
+                    controller: _mobileNumberController,
+                    label: 'Mobile Number',
+                    hintText: '0300 1234567',
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 10),
 
-            // Mobile Number
-            _buildTextField(
-              controller: _mobileNumberController,
-              label: 'Mobile Number',
-              hintText: '0300 1234567',
-              keyboardType: TextInputType.phone,
-            ),
+                  // Account Type Label
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Account Type',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
 
-            const SizedBox(height: 10),
+                  // Account Type with Radio Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildAccountTypeOption('EasyPaisa'),
+                      const SizedBox(width: 20),
+                      _buildAccountTypeOption('JazzCash'),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
 
-            // Account Type Label
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Account Type',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+                  // Amount
+                  _buildTextField(
+                    controller: _amountController,
+                    label: 'Amount (Rs)',
+                    hintText: 'eg 1200',
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 20),
 
-            const SizedBox(height: 10),
+                  // Withdraw Button
+                  ElevatedButton(
+                    onPressed: () {
+                      final accountTitle = _accountTitleController.text;
+                      final mobileNumber = _mobileNumberController.text;
+                      final amount = _amountController.text;
 
-            // Account Type with Radio Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildAccountTypeOption('EasyPaisa'),
-                const SizedBox(width: 20),
-                _buildAccountTypeOption('JazzCash'),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            // Amount
-            _buildTextField(
-              controller: _amountController,
-              label: 'Amount (Rs)',
-              hintText: 'eg 1200',
-              keyboardType: TextInputType.number,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Withdraw Button
-            ElevatedButton(
-              onPressed: () {
-                final accountTitle = _accountTitleController.text;
-                final mobileNumber = _mobileNumberController.text;
-                final amount = _amountController.text;
-
-                if (accountTitle.isNotEmpty && mobileNumber.isNotEmpty && amount.isNotEmpty) {
-                  print('Withdrawing Rs. $amount via $_selectedAccountType');
-                } else {
-                  print('Please fill in all fields.');
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 165, 6, 13),
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                'Withdraw Cash',
-                style: TextStyle(fontSize: 16, color: Colors.white),
+                      if (accountTitle.isNotEmpty && mobileNumber.isNotEmpty && amount.isNotEmpty) {
+                        double withdrawAmount = double.parse(amount);
+                        if (withdrawAmount <= _walletBalance) {
+                          setState(() {
+                            _walletBalance -= withdrawAmount; // Deduct the amount from the balance
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Withdrawing Rs. $withdrawAmount via $_selectedAccountType',
+                              ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Insufficient balance. Your balance is Rs. $_walletBalance'),
+                            ),
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please fill in all fields.'),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 165, 6, 13),
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Withdraw Cash',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -207,7 +229,7 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
     );
   }
 
-  // Helper method to create text fields
+  // Helper methods for text fields, account type options, and buttons
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -228,14 +250,13 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
           borderRadius: BorderRadius.circular(10),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color:  Color.fromARGB(255, 165, 6, 13),),
+          borderSide: const BorderSide(color: Color.fromARGB(255, 165, 6, 13)),
           borderRadius: BorderRadius.circular(10),
         ),
       ),
     );
   }
 
-  // Helper method to create account type options
   Widget _buildAccountTypeOption(String type) {
     return GestureDetector(
       onTap: () {
@@ -271,7 +292,6 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
     );
   }
 
-  // Helper method to create smaller buttons
   Widget _buildSmallButton(
       {required IconData icon, required String label, required VoidCallback onPressed}) {
     return ElevatedButton(
