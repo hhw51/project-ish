@@ -1,22 +1,7 @@
 import 'package:flutter/material.dart';
-
-class CartItem {
-  final String imageUrl;
-  final String name;
-  final String description;
-  final double price;
-  int quantity;
-  final int points;
-
-  CartItem({
-    required this.imageUrl,
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.quantity,
-    required this.points,
-  });
-}
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:red_coprative/account.dart';
+import 'package:red_coprative/login.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -26,62 +11,36 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  // Example list of cart items with dummy data
-  List<CartItem> cartItems = [
-    CartItem(
-      imageUrl: 'assets/Kid.png',
-      name: 'Wireless Mouse',
-      description: 'A high-quality wireless mouse with ergonomic design.',
-      price: 25.99,
-      quantity: 1,
-      points: 120,
-    ),
-    CartItem(
-      imageUrl: 'assets/technology (1).png',
-      name: 'Gaming Headset',
-      description: 'A surround-sound gaming headset with a built-in microphone.',
-      price: 49.99,
-      quantity: 2,
-      points: 300,
-    ),
-    CartItem(
-      imageUrl: 'assets/Kid.png',
-      name: 'Mechanical Keyboard',
-      description: 'A mechanical keyboard with RGB lighting and tactile feedback.',
-      price: 89.99,
-      quantity: 1,
-      points: 450,
-    ),
-    CartItem(
-      imageUrl: 'assets/Kid.png',
-      name: 'USB-C Hub',
-      description: 'A multi-port USB-C hub for connecting various devices.',
-      price: 39.99,
-      quantity: 3,
-      points: 200,
-    ),
-    CartItem(
-      imageUrl: 'assets/Kid.png',
-      name: 'Portable SSD',
-      description: 'A 1TB portable SSD with fast read and write speeds.',
-      price: 129.99,
-      quantity: 1,
-      points: 550,
-    ),
-  ];
+  final CollectionReference cartCollection = FirebaseFirestore.instance.collection('cart');
+  final CollectionReference historyCollection = FirebaseFirestore.instance.collection('history');
 
-  // Function to delete an item from the cart
-  void _deleteItem(int index) {
-    setState(() {
-      cartItems.removeAt(index);
-    });
+  // Function to move an item from cart to history and delete it from cart
+  Future<void> _buyItem(String docId, Map<String, dynamic> itemData, String name) async {
+    try {
+      // Move the item to the 'history' collection
+      await historyCollection.add(itemData);
+
+      // Delete the item from the 'cart' collection
+      await cartCollection.doc(docId).delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$name has been bought and moved to history')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to buy item: $e')),
+      );
+    }
   }
 
-  // Function to handle the Buy action (for demo purposes)
-  void _buyItems() {
-    // You can implement your buy functionality here
+  // Function to delete all items from the cart
+  Future<void> _deleteAllItems() async {
+    final cartItems = await cartCollection.get();
+    for (var doc in cartItems.docs) {
+      await cartCollection.doc(doc.id).delete();
+    }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Buy ${cartItems.length} items!')),
+      const SnackBar(content: Text('All items have been removed from the cart')),
     );
   }
 
@@ -89,113 +48,222 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1C1B), // Background color of the page
-      appBar: AppBar(
-        title: const Text('Cart'),
-        backgroundColor: const Color(0xFF1E1C1B), // Match app bar with background
-        elevation: 0, // Remove shadow
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                final item = cartItems[index];
-                return Card(
-                  margin: const EdgeInsets.all(8.0),
-                  color: const Color.fromARGB(38, 255, 255, 255), // Item background color
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20), // Border radius
-                  ),
-                  child: ListTile(
-                    leading: Image.network(
-                      item.imageUrl,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
+     
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5,vertical: 40),
+        child: Column(
+          children: [
+        
+            Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Accountscreen()),
+                        );
+                      },
                     ),
-                    title: Text(
-                      item.name,
-                      style: const TextStyle(color: Color(0xFFFFFFFF)), // Font color (white)
+                    IconButton(
+                      icon: Image.asset("assets/profilelogout.png"),
+                      onPressed: () async {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.description,
-                          style: const TextStyle(color: Color(0xFFFFFFFF)), // Font color (white)
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Price: \$${item.price.toStringAsFixed(2)}',
-                          style: const TextStyle(color: Color(0xFFFFFFFF)), // Font color (white)
-                        ),
-                        Text(
-                          'Quantity: ${item.quantity}',
-                          style: const TextStyle(color: Color(0xFFFFFFFF)), // Font color (white)
-                        ),
-                        Text(
-                          'Points: ${item.points}',
-                          style: const TextStyle(color: Color(0xFFFFFFFF)), // Font color (white)
-                        ),
-                      ],
-                    ),
-                    trailing: Column(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Color(0xFFA5060D)),
-                          onPressed: () => _deleteItem(index), // Delete the item
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          // Buttons: Delete and Buy
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // Perform delete all items action
-                    setState(() {
-                      cartItems.clear(); // Clear all items from the cart
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFA5060D), // New red color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20), // Button border radius
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                  child: const Text(
-                    'Delete All',
-                    style: TextStyle(color: Color(0xFFFFFFFF)), // Button text color
-                  ),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: _buyItems,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFA5060D), // New red color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20), // Button border radius
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                  child: const Text(
-                    'Buy',
-                    style: TextStyle(color: Color(0xFFFFFFFF)), // Button text color
-                  ),
-                ),
-              ],
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: cartCollection.snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text("Error: ${snapshot.error}"));
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+        
+                  var cartItems = snapshot.data!.docs;
+        
+                  if (cartItems.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No items in the cart",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+        
+                  return ListView.builder(
+                    itemCount: cartItems.length,
+                    itemBuilder: (context, index) {
+                      var item = cartItems[index];
+                      return Card(
+                        margin: const EdgeInsets.all(8.0),
+                        color: const Color.fromARGB(38, 255, 255, 255), // Item background color
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20), // Border radius
+                        ),
+                        child: ListTile(
+                          leading: Image.network(
+                            item['imageUrl'] ?? '',
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
+                          title: Text(
+                            item['name'],
+                            style: const TextStyle(
+                              color: Color(0xFFFFFFFF),
+                              fontWeight: FontWeight.bold, // Bold product name
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['description'],
+                                style: const TextStyle(color: Color(0xFFFFFFFF)), // Font color (white)
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Price: ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold, // Bold key
+                                      color: Color(0xFFFFFFFF),
+                                    ),
+                                  ),
+                                  Text(
+                                    '\$${item['price'].toStringAsFixed(2)}',
+                                    style: const TextStyle(color: Color(0xFFFFFFFF)), // Normal value
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Quantity: ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold, // Bold key
+                                      color: Color(0xFFFFFFFF),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${item['quantity']}',
+                                    style: const TextStyle(color: Color(0xFFFFFFFF)), // Normal value
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Points: ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold, // Bold key
+                                      color: Color(0xFFFFFFFF),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${item['points']}',
+                                    style: const TextStyle(color: Color(0xFFFFFFFF)), // Normal value
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.shopping_bag, color: Colors.green),
+                            onPressed: () => _buyItem(item.id, item.data() as Map<String, dynamic>, item['name']), // Buy the item
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+            // Buttons: Delete All and Buy All
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SafeArea( // Using SafeArea to prevent overflow
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _deleteAllItems, // Delete all items action
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFA5060D), // Red color
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20), // Button border radius
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                      child: const Text(
+                        'Delete All',
+                        style: TextStyle(color: Color(0xFFFFFFFF)), // Button text color
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          // Fetch all cart items
+                          final cartItems = await cartCollection.get();
+        
+                          // Initialize a batch for atomic operations
+                          WriteBatch batch = FirebaseFirestore.instance.batch();
+        
+                          // Loop through each cart item
+                          for (var doc in cartItems.docs) {
+                            // Add each item to the history collection
+                            batch.set(historyCollection.doc(), doc.data());
+        
+                            // Delete each item from the cart collection
+                            batch.delete(cartCollection.doc(doc.id));
+                          }
+        
+                          // Commit the batch operation (moves all items at once)
+                          await batch.commit();
+        
+                          // Show confirmation message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('All items have been bought and moved to history')),
+                          );
+        
+                        } catch (e) {
+                          // Show error message if something goes wrong
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to buy all items: $e')),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFA5060D), // Red color
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20), // Button border radius
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                      child: const Text(
+                        'Buy All',
+                        style: TextStyle(color: Color(0xFFFFFFFF)), // Button text color
+                      ),
+                    ),
+        
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
