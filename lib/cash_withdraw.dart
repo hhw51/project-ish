@@ -97,7 +97,7 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
                             print('Cash Withdraw...');
                           },
                         ),
-                         SizedBox(width: 5),
+                        SizedBox(width: 5),
                         _buildSmallButton(
                           icon: Icons.contact_page,
                           label: "View History",
@@ -269,23 +269,23 @@ class _CashWithdrawScreenState extends State<CashWithdrawScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: _selectedAccountType == type ? Colors.red : Colors.transparent,
+          color: _selectedAccountType == type ?  Color.fromARGB(255, 165, 6, 13) : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.red),
+          border: Border.all(  color: Color.fromARGB(255, 165, 6, 13)),
         ),
         child: Row(
           children: [
             Text(
               type,
               style: TextStyle(
-                color: _selectedAccountType == type ? Colors.white : Colors.red,
+                color: _selectedAccountType == type ? Colors.white : Color.fromARGB(255, 165, 6, 13),
                 fontSize: 16,
               ),
             ),
             const SizedBox(width: 10),
             Icon(
               Icons.circle,
-              color: _selectedAccountType == type ? Colors.white : Colors.red,
+              color: _selectedAccountType == type ? Colors.white :   Color.fromARGB(255, 165, 6, 13),
               size: 18,
             ),
           ],

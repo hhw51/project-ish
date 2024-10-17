@@ -1,10 +1,8 @@
-// ignore_for_file: avoid_print, use_build_context_synchronously, use_super_parameters
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-// import 'cart_items.dart'; // Import the CartScreen
+import 'package:firebase_auth/firebase_auth.dart'; // For user-specific operations
 import 'account.dart';
 import 'login.dart';
 
@@ -16,57 +14,59 @@ class ViewproductScreen extends StatefulWidget {
 }
 
 class _ViewproductScreenState extends State<ViewproductScreen> {
-  // Reference to the Firestore collection where product data is stored
   final CollectionReference productsCollection = FirebaseFirestore.instance.collection('cart_data');
 
-  // This function retrieves the download URL of an image from Firebase Storage
+  // Function to get the current user ID
+  String? getUserID() {
+    User? user = FirebaseAuth.instance.currentUser;
+    return user?.uid;
+  }
+
   Future<String> getDownloadUrl(String gsUrl) async {
     try {
-      // Accessing the file using the Firebase Storage reference URL (gs://)
       Reference ref = FirebaseStorage.instance.refFromURL(gsUrl);
-      String downloadUrl = await ref.getDownloadURL(); // Getting the actual HTTP URL
+      String downloadUrl = await ref.getDownloadURL();
       return downloadUrl;
     } catch (e) {
       print("Error fetching download URL: $e");
-      return ''; // Return an empty string if an error occurs
+      return '';
     }
   }
 
-  // This function calculates points based on the price and quantity of the product
   int calculatePoints(int price, int quantity) {
-    int pointsPerItem = (price / 1000).floor(); // 1 point per 1000 price
-    return pointsPerItem * quantity; // Multiply points by quantity
+    int pointsPerItem = (price / 1000).floor();
+    return pointsPerItem * quantity;
   }
 
-  // This function adds a product to the cart in Firestore, including the image URL and description
   Future<void> addToCart(String productId, String name, String description, int price, int quantity, int points, String imageUrl) async {
-    try {
-      // Add the product details to the 'cart' collection in Firestore
-      await FirebaseFirestore.instance.collection('cart').add({
-        'productId': productId,
-        'name': name,
-        'description': description, // Adding description to the cart
-        'price': price,
-        'quantity': quantity,
-        'totalPrice': price * quantity,
-        'points': points, // Adding points to the cart
-        'imageUrl': imageUrl // Adding image URL to the cart
-      });
-      // Show a confirmation message using Snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$name has been added to cart with $points points'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      // Show an error message in case of failure
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to add $name to cart: $e'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    String? userId = getUserID();
+    if (userId != null) {
+      try {
+        // Add the product details to the user's specific cart in Firestore
+        await FirebaseFirestore.instance.collection('users').doc(userId).collection('cart').add({
+          'productId': productId,
+          'name': name,
+          'description': description,
+          'price': price,
+          'quantity': quantity,
+          'totalPrice': price * quantity,
+          'points': points,
+          'imageUrl': imageUrl
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$name has been added to cart with $points points'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add $name to cart: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -84,7 +84,6 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Back button to navigate to the account screen
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                     onPressed: () {
@@ -94,7 +93,6 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
                       );
                     },
                   ),
-                  // Logout button to navigate to the login screen
                   IconButton(
                     icon: Image.asset("assets/profilelogout.png"),
                     onPressed: () async {
@@ -109,10 +107,9 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
                 ],
               ),
             ),
-            // StreamBuilder listens to real-time updates from Firestore
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: productsCollection.snapshots(), // Listen to snapshots from 'cart_data' collection
+                stream: productsCollection.snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.hasError) {
                     return Center(
@@ -123,25 +120,24 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
                     );
                   }
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator()); // Show a loader while waiting for data
+                    return const Center(child: CircularProgressIndicator());
                   }
 
-                  var products = snapshot.data!.docs; // Retrieve the documents from Firestore
+                  var products = snapshot.data!.docs;
 
                   if (products.isEmpty) {
                     return const Center(child: Text("No products available", style: TextStyle(color: Colors.white)));
                   }
 
-                  // Build a list of products
                   return ListView.builder(
                     itemCount: products.length,
                     itemBuilder: (context, index) {
                       var product = products[index];
                       return ProductItem(
-                        product: product, // Pass the product data to the ProductItem widget
-                        getDownloadUrl: getDownloadUrl, // Pass the download URL function
-                        calculatePoints: calculatePoints, // Pass the points calculation function
-                        addToCart: addToCart,  // Pass the addToCart function
+                        product: product,
+                        getDownloadUrl: getDownloadUrl,
+                        calculatePoints: calculatePoints,
+                        addToCart: addToCart,
                       );
                     },
                   );
@@ -156,10 +152,10 @@ class _ViewproductScreenState extends State<ViewproductScreen> {
 }
 
 class ProductItem extends StatefulWidget {
-  final QueryDocumentSnapshot product; // Product data from Firestore
-  final Future<String> Function(String) getDownloadUrl; // Function to get the image URL
-  final int Function(int, int) calculatePoints; // Function to calculate points
-  final Future<void> Function(String, String, String, int, int, int, String) addToCart; // addToCart function with points, description, and imageUrl
+  final QueryDocumentSnapshot product;
+  final Future<String> Function(String) getDownloadUrl;
+  final int Function(int, int) calculatePoints;
+  final Future<void> Function(String, String, String, int, int, int, String) addToCart;
 
   const ProductItem({
     Key? key,
@@ -174,18 +170,17 @@ class ProductItem extends StatefulWidget {
 }
 
 class _ProductItemState extends State<ProductItem> {
-  int quantity = 1; // Local state for each product's quantity
+  int quantity = 1;
 
   @override
   Widget build(BuildContext context) {
-    int availableQuantity = widget.product['quantity']; // Retrieve available quantity from Firestore
-    int price = widget.product['price']; // Retrieve product price from Firestore
-    String gsUrl = widget.product['imageUrl']; // Retrieve the image URL from Firestore
-
-    int totalPoints = widget.calculatePoints(price, quantity); // Calculate total points for the selected quantity
+    int availableQuantity = widget.product['quantity'];
+    int price = widget.product['price'];
+    String gsUrl = widget.product['imageUrl'];
+    int totalPoints = widget.calculatePoints(price, quantity);
 
     return FutureBuilder<String>(
-      future: widget.getDownloadUrl(gsUrl), // Get the actual image download URL
+      future: widget.getDownloadUrl(gsUrl),
       builder: (context, AsyncSnapshot<String> downloadSnapshot) {
         if (downloadSnapshot.connectionState == ConnectionState.waiting) {
           return Container(
@@ -195,7 +190,7 @@ class _ProductItemState extends State<ProductItem> {
               color: Colors.grey[900],
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Center(child: CircularProgressIndicator()), // Show a loader while the image is loading
+            child: const Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -208,9 +203,9 @@ class _ProductItemState extends State<ProductItem> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: ListTile(
-              leading: const Icon(Icons.error, color: Colors.red, size: 50), // Show error if image loading fails
+              leading: const Icon(Icons.error, color: Colors.red, size: 50),
               title: Text(
-                widget.product['name'], // Show product name
+                widget.product['name'],
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -230,11 +225,10 @@ class _ProductItemState extends State<ProductItem> {
           );
         }
 
-        String downloadUrl = downloadSnapshot.data!; // Get the download URL
+        String downloadUrl = downloadSnapshot.data!;
 
         return GestureDetector(
           onTap: () {
-            // Show Dialog with product details when product is clicked
             showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -248,14 +242,14 @@ class _ProductItemState extends State<ProductItem> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Image.network(
-                          downloadUrl, // Show product image
+                          downloadUrl,
                           height: 200,
                           width: double.infinity,
                           fit: BoxFit.cover,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          widget.product['name'], // Show product name
+                          widget.product['name'],
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -264,12 +258,12 @@ class _ProductItemState extends State<ProductItem> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          widget.product['description'], // Show product description
+                          widget.product['description'],
                           style: const TextStyle(color: Colors.white, fontSize: 16),
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          "\$${widget.product['price']}", // Show product price
+                          "\$${widget.product['price']}",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -291,20 +285,18 @@ class _ProductItemState extends State<ProductItem> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: ListTile(
-              // Adjust the content padding to move items inside the ListTile
-              contentPadding: const EdgeInsets.only(left: 0, right: 8.0), // Adjust padding inside the ListTile to move leading left
-
+              contentPadding: const EdgeInsets.only(left: 0, right: 8.0),
               leading: Container(
-                padding: const EdgeInsets.only(left: 0), // No need for margin, adjust padding
+                padding: const EdgeInsets.only(left: 0),
                 height: 100,
                 width: 80,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
-                    imageUrl: downloadUrl, // Display product image using CachedNetworkImage
+                    imageUrl: downloadUrl,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()), // Show a loader while loading
-                    errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.red), // Show error icon on failure
+                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.red),
                   ),
                 ),
               ),
@@ -312,7 +304,7 @@ class _ProductItemState extends State<ProductItem> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.product['name'], // Display product name
+                    widget.product['name'],
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -322,7 +314,7 @@ class _ProductItemState extends State<ProductItem> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    widget.product['description'], // Display product description
+                    widget.product['description'],
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
@@ -334,7 +326,7 @@ class _ProductItemState extends State<ProductItem> {
                   Row(
                     children: [
                       Text(
-                        "\$${widget.product['price']}", // Display product price
+                        "\$${widget.product['price']}",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -350,58 +342,51 @@ class _ProductItemState extends State<ProductItem> {
                       const SizedBox(width: 2),
                       Flexible(
                         child: Text(
-                          "$totalPoints pts", // Display calculated points
+                          "$totalPoints pts",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
-                          overflow: TextOverflow.ellipsis, // Prevents overflow
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-              
-              // Add to Cart button (trailing) - Move more to the left
               trailing: Container(
-                margin: const EdgeInsets.only(right: 0), // Adjust the margin to move the icon more to the left
+                margin: const EdgeInsets.only(right: 0),
                 child: IconButton(
                   icon: const Icon(Icons.add_shopping_cart, color: Colors.amber),
                   onPressed: () {
-                    // Calculate points before adding to cart
                     int points = widget.calculatePoints(widget.product['price'], quantity);
 
-                    // Call the addToCart function with product details, points, and imageUrl
                     widget.addToCart(
-                      widget.product.id,              // Product ID
-                      widget.product['name'],          // Product name
-                      widget.product['description'],   // Product description
-                      widget.product['price'],         // Product price
-                      quantity,                        // Quantity
-                      points,                          // Calculated points
-                      downloadUrl                      // Image URL
+                        widget.product.id,
+                        widget.product['name'],
+                        widget.product['description'],
+                        widget.product['price'],
+                        quantity,
+                        points,
+                        downloadUrl
                     );
                   },
                 ),
               ),
-              // Quantity controls
               subtitle: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // Decrease quantity button
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
                     onPressed: () {
                       if (quantity > 1) {
                         setState(() {
-                          quantity--; // Decrease quantity
+                          quantity--;
                         });
                       }
                     },
                   ),
-                  // Display current quantity
                   Text(
                     "$quantity",
                     style: const TextStyle(
@@ -410,13 +395,12 @@ class _ProductItemState extends State<ProductItem> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // Increase quantity button
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, color: Colors.green, size: 20),
                     onPressed: () {
                       if (quantity < availableQuantity) {
                         setState(() {
-                          quantity++; // Increase quantity
+                          quantity++;
                         });
                       }
                     },

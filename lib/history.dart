@@ -1,7 +1,8 @@
-// ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors
-
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:red_coprative/account.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'history_data.dart';
 
 class Historyscreen extends StatefulWidget {
   const Historyscreen({super.key});
@@ -11,110 +12,170 @@ class Historyscreen extends StatefulWidget {
 }
 
 class _HistoryscreenState extends State<Historyscreen> {
+  final CollectionReference historyCollection = FirebaseFirestore.instance.collection('history');
+  Map<String, dynamic>? userData;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (doc.exists) {
+          setState(() {
+            userData = doc.data() as Map<String, dynamic>?;
+          });
+        }
+      }
+    } catch (e) {
+      print("Error fetching user data: $e");
+    }
+  }
+
+  String formatDate(Timestamp? timestamp) {
+    if (timestamp == null) {
+      return 'No Date Available';
+    }
+    DateTime date = timestamp.toDate();
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
+  Future<void> _deleteHistoryItem(String docId) async {
+    try {
+      await historyCollection.doc(docId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Purchase has been deleted from history')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete purchase: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        alignment: Alignment.topCenter,
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Center(
+        child: Text('You need to be logged in to view purchase history.'),
+      );
+    }
 
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Column(
         children: [
           Container(
-            height: 368,
             width: double.infinity,
-            decoration: BoxDecoration(color: Colors.cyan,borderRadius: BorderRadius.only(bottomRight: Radius.circular(115))),
-          ),
-          Container(
-            height: 430,
-            width: double.infinity,
-           
-            decoration: BoxDecoration( color: Colors.cyan,borderRadius: BorderRadius.only(bottomRight: Radius.circular(250))),
-            child: Column(
-              
+            padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
+            decoration: const BoxDecoration(
+              color: Colors.black,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 17),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                      IconButton(
-                    icon:const Icon(Icons.arrow_back, color: Colors.white, size: 32),
-                    onPressed: () {
-                      // Navigate to the Accountscreen
-                      Navigator.pop(
-                        context,
-                        MaterialPageRoute(builder: (context) => Accountscreen()),
-                      );
-                    },
-                  ),
-                    Icon(Icons.commit,size: 30,)
-                  ],
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
-                SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text("My Profile",style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold,color: Colors.white),),
-                  ],
-                ),
-                SizedBox(height: 25),
-                Column(
-                     mainAxisAlignment: MainAxisAlignment.center,
-                     crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      height: 65,
-                      width: 65,
-                      decoration: BoxDecoration(color: Color.fromARGB(255, 187, 44, 25),borderRadius: BorderRadius.circular(13) ),
-                      child: Image.asset("assets/Kid.png"),
-                      
-                    ),
-                    SizedBox(height: 15),
-                    Text("Florance Katy",style: TextStyle(
-                      fontSize: 17,fontWeight: FontWeight.bold,
-                      color: Colors.white),),
-                        SizedBox(height: 10),
-                      Text("Team Leader",style: TextStyle(fontSize: 13,fontWeight: FontWeight.bold,color: Color.fromARGB(255, 218, 203, 7)),)
-            
-                  ],
-                ),
-                SizedBox(height: 30,),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                      children: [
-                        Text("Folders",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.white),),
-                        Text("67",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.amber),)
-                      ],
-                    ),
-                     Column(
-                      children: [
-                        Text("Itame",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.white),),
-                        Text("986",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.amber),)
-                      ],
-                    ),
-                     Column(
-                      children: [
-                        Text("Used",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.white),),
-                        Text("10GB",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.amber),)
-                      ],
-                    ),
-                  ],
-                ),
-               
+                const Icon(Icons.commit, size: 30, color: Colors.white),
               ],
             ),
           ),
-           
-           Align(
-            alignment: Alignment.bottomCenter,
-             child: Container(
-                    width: double.infinity,
-                    height: 280,
-                    
-                    decoration: BoxDecoration(color: Colors.grey,borderRadius: BorderRadius.only(topLeft: Radius.circular(200))),
-                  ),
-           )
-        ],      
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                userData?['full_name'] ?? "Name not available",
+                style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: historyCollection.where('userId', isEqualTo: user.uid).snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.white)),
+                    );
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  var historyItems = snapshot.data!.docs;
+
+                  if (historyItems.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No purchase history",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: historyItems.length,
+                    itemBuilder: (context, index) {
+                      var historyItem = historyItems[index];
+                      Timestamp? timestamp = historyItem['timestamp'] as Timestamp?;
+                      double totalAmount = historyItem['totalAmount'];
+                      int totalPoints = historyItem['totalPoints'];
+                      String docId = historyItem.id;
+                      Map<String, dynamic> purchaseData = historyItem.data() as Map<String, dynamic>;
+
+                      return GestureDetector(
+                        onTap: () {
+                          showPurchaseDetails(context, purchaseData);
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                          color: const Color.fromARGB(38, 255, 255, 255),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              'Date of Purchase: ${formatDate(timestamp)}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Total Points: $totalPoints', style: const TextStyle(color: Colors.white)),
+                                Text('Amount of Purchase: \$${totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white)),
+                              ],
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete,   color: Color.fromARGB(255, 165, 6, 13),),
+                              onPressed: () => _deleteHistoryItem(docId),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

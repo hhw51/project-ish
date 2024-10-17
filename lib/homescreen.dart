@@ -28,7 +28,7 @@ class _HomescreenState extends State<Homescreen> {
   }
 
   // Function to fetch user data from Firestore
-  Future<void> fetchUserData() async {
+  Future<void> fetchUserData() async { 
     try {
       // Get the currently logged-in user
       User? user = FirebaseAuth.instance.currentUser;
@@ -189,7 +189,7 @@ class _HomescreenState extends State<Homescreen> {
                           color: Colors.red.shade900, // Same red color
                           borderRadius:const BorderRadius.only(
                             bottomLeft: Radius.circular(10),
-                           
+
                           ),
                         ),
                         child: TextButton(
@@ -223,7 +223,7 @@ class _HomescreenState extends State<Homescreen> {
                           color: Colors.red.shade900, // Same red color
                           borderRadius:const BorderRadius.only(
                             bottomRight: Radius.circular(10),
-                            
+
                           ),
                         ),
                         child: TextButton(
@@ -250,7 +250,7 @@ class _HomescreenState extends State<Homescreen> {
 
               // PageView with Dots Indicator
               const SizedBox(height: 16),
-               Container(
+              Container(
                 height: 400, // Set a fixed height for the page view
                 child: PageView(
                   controller: _pageController,

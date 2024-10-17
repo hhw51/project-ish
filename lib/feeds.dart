@@ -1,6 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:red_coprative/cash_withdraw.dart';
 import 'package:red_coprative/history.dart';
 
@@ -14,11 +14,13 @@ class Feedsscreen extends StatefulWidget {
 class _FeedsscreenState extends State<Feedsscreen> {
   // Variable to hold user data
   Map<String, dynamic>? userData;
+  num totalPoints = 0;  // Use `num` to handle both integer and decimal values
 
   @override
   void initState() {
     super.initState();
     fetchUserData(); // Fetch user data when the screen initializes
+    fetchUserTotalPoints(); // Fetch total points for the user
   }
 
   // Function to fetch user data from Firestore
@@ -43,6 +45,40 @@ class _FeedsscreenState extends State<Feedsscreen> {
       }
     } catch (e) {
       print("Error fetching user data: $e");
+    }
+  }
+
+  // Function to fetch total points of the logged-in user from their cart collection
+  Future<void> fetchUserTotalPoints() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // Fetch the cart items for the logged-in user
+        QuerySnapshot cartItemsSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('cart')
+            .get();
+
+        // Calculate the total points for the user based on cart items
+        num pointsSum = 0;
+        for (var doc in cartItemsSnapshot.docs) {
+          var data = doc.data() as Map<String, dynamic>;
+          num price = data['price'] ?? 0;  // Assume there is a 'price' field in cart items
+          num quantity = data['quantity'] ?? 1;  // Default quantity to 1 if not present
+
+          // Example: 1 point for every $100 spent
+          pointsSum += (price / 100) * quantity;  // Adjust the points calculation logic as needed
+        }
+
+        // Update the totalPoints state
+        setState(() {
+          totalPoints = pointsSum;
+        });
+      }
+    } catch (e) {
+      print("Error fetching total points: $e");
     }
   }
 
@@ -97,7 +133,7 @@ class _FeedsscreenState extends State<Feedsscreen> {
                               // Dynamically display the user's name
                               Text(
                                 userData?['full_name'] ?? "Name not available",
-                                style:const TextStyle(
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: Color.fromARGB(255, 12, 12, 12), // Dark color for the text
@@ -113,7 +149,7 @@ class _FeedsscreenState extends State<Feedsscreen> {
                                   // Dynamically display the user's location
                                   Text(
                                     userData?['location'] ?? "Lahore",
-                                    style:const TextStyle(
+                                    style: const TextStyle(
                                       color: Color.fromARGB(255, 12, 12, 12), // Text color
                                       fontSize: 16,
                                     ),
@@ -124,7 +160,7 @@ class _FeedsscreenState extends State<Feedsscreen> {
                               // Dynamically display the user's account type
                               Text(
                                 userData?['account_type'] ?? "Account type not available",
-                                style:const TextStyle(
+                                style: const TextStyle(
                                   color: Color.fromARGB(255, 12, 12, 12), // Text color
                                   fontSize: 16,
                                 ),
@@ -133,14 +169,14 @@ class _FeedsscreenState extends State<Feedsscreen> {
                           ),
                         ),
                         Padding(
-                          padding:const EdgeInsets.only(bottom: 27),
+                          padding: const EdgeInsets.only(bottom: 27),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Dynamically display the user's points, defaulting to 0 if not available
+                              // Dynamically display the user's points
                               Text(
-                                "${userData?['points'] ?? 0}",
-                                style:const TextStyle(
+                                "$totalPoints", // Display the calculated total points here
+                                style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -180,14 +216,13 @@ class _FeedsscreenState extends State<Feedsscreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.red.shade900, // Same red color
-                          borderRadius:const BorderRadius.only(
+                          borderRadius: const BorderRadius.only(
                             bottomLeft: Radius.circular(10),
-
                           ), // Rounded left corners
                         ),
                         child: TextButton(
                           onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => CashWithdrawScreen(),));
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const CashWithdrawScreen(),));
                           },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 15),
@@ -214,14 +249,13 @@ class _FeedsscreenState extends State<Feedsscreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.red.shade900, // Same red color
-                          borderRadius:const BorderRadius.only(
+                          borderRadius: const BorderRadius.only(
                             bottomRight: Radius.circular(10),
-
                           ), // Rounded right corners
                         ),
                         child: TextButton(
                           onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => Historyscreen(),));
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const Historyscreen(),));
                           },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 15),
@@ -255,7 +289,7 @@ class _FeedsscreenState extends State<Feedsscreen> {
                       height: 362, // Adjust the height accordingly
                       width: 400,
                       child: Container(
-                        decoration:const BoxDecoration(
+                        decoration: const BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage("assets/technology (1).jpg"), // Image asset
                             fit: BoxFit.cover,

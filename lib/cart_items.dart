@@ -1,9 +1,7 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:red_coprative/account.dart';
-import 'package:red_coprative/login.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -13,53 +11,142 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final CollectionReference cartCollection = FirebaseFirestore.instance.collection('cart');
   final CollectionReference historyCollection = FirebaseFirestore.instance.collection('history');
+  double _totalAmount = 0.0;
+  int _totalPoints = 0;
 
-  // Function to move an item from cart to history and delete it from cart
-  Future<void> _buyItem(String docId, Map<String, dynamic> itemData, String name) async {
-    try {
-      // Move the item to the 'history' collection
-      await historyCollection.add(itemData);
+  // Function to get the current user ID
+  String? getUserID() {
+    User? user = FirebaseAuth.instance.currentUser;
+    return user?.uid;
+  }
 
-      // Delete the item from the 'cart' collection
-      await cartCollection.doc(docId).delete();
+  @override
+  void initState() {
+    super.initState();
+    _calculateTotals();
+  }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$name has been bought and moved to history')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to buy item: $e')),
-      );
+  Future<void> _calculateTotals() async {
+    String? userId = getUserID();
+    if (userId != null) {
+      final cartItems = await FirebaseFirestore.instance.collection('users').doc(userId).collection('cart').get();
+      double totalAmount = 0.0;
+      int totalPoints = 0;
+
+      for (var doc in cartItems.docs) {
+        totalAmount += (doc['price'] * doc['quantity']).toDouble();
+        num pointsValue = doc['points'];
+        totalPoints += (pointsValue * doc['quantity']).toInt();
+      }
+
+      setState(() {
+        _totalAmount = totalAmount;
+        _totalPoints = totalPoints;
+      });
     }
   }
 
-  // Function to delete all items from the cart
-  Future<void> _deleteAllItems() async {
-    final cartItems = await cartCollection.get();
-    for (var doc in cartItems.docs) {
-      await cartCollection.doc(doc.id).delete();
+  Future<void> _deleteItem(String docId, String name) async {
+    String? userId = getUserID();
+    if (userId != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(userId).collection('cart').doc(docId).delete();
+        _calculateTotals();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$name has been removed from the cart')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete item: $e')),
+        );
+      }
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('All items have been removed from the cart')),
-    );
+  }
+
+  Future<void> _checkout() async {
+    String? userId = getUserID();
+    if (userId != null) {
+      final cartItems = await FirebaseFirestore.instance.collection('users').doc(userId).collection('cart').get();
+      if (cartItems.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No items in the cart to checkout')),
+        );
+        return;
+      }
+
+      List<String> imageUrls = [];
+      List<String> names = [];
+      List<String> descriptions = [];
+      List<double> prices = [];
+      List<int> quantities = [];
+      List<int> points = [];
+
+      for (var doc in cartItems.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        imageUrls.add(data['imageUrl'] ?? '');
+        names.add(data['name'] ?? '');
+        descriptions.add(data['description'] ?? '');
+        prices.add((data['price'] ?? 0.0).toDouble());
+        quantities.add(data['quantity'] ?? 1);
+        num pointsValue = data['points'];
+        points.add((pointsValue).toInt());
+      }
+
+      await historyCollection.add({
+        'imageUrls': imageUrls,
+        'names': names,
+        'descriptions': descriptions,
+        'prices': prices,
+        'quantities': quantities,
+        'points': points,
+        'totalAmount': _totalAmount,
+        'totalPoints': _totalPoints,
+        'timestamp': FieldValue.serverTimestamp(),
+        'userId': userId
+      });
+
+      WriteBatch batch = FirebaseFirestore.instance.batch();
+      for (var doc in cartItems.docs) {
+        batch.delete(FirebaseFirestore.instance.collection('users').doc(userId).collection('cart').doc(doc.id));
+      }
+      await batch.commit();
+
+      setState(() {
+        _totalAmount = 0.0;
+        _totalPoints = 0;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Checkout successful. Items moved to history')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    String? userId = getUserID();
+    if (userId == null) {
+      return const Center(
+        child: Text('You need to be logged in to view the cart.'),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1C1B), // Background color of the page
-     
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5,vertical: 40),
-        child: Column(
-          children: [
-        
-            Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
+      backgroundColor: const Color(0xFF1E1C1B),
+      // appBar: AppBar(
+      //   title: const Text('Cart',style: TextStyle(color: Colors.white),),
+      //   backgroundColor: const Color(0xFF1E1C1B),
+      //   elevation: 0,
+      // ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Row(
+             
+              children: [
+                 IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
                       onPressed: () {
                         Navigator.pop(
@@ -68,204 +155,169 @@ class _CartScreenState extends State<CartScreen> {
                         );
                       },
                     ),
-                    IconButton(
-                      icon: Image.asset("assets/profilelogout.png"),
-                      onPressed: () async {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                        );
-                      },
+                        SizedBox(width: 50),
+                    Text('Cart',style: TextStyle(color: Colors.white,fontSize: 30),),
+                 
+              ],
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('users').doc(userId).collection('cart').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                var cartItems = snapshot.data!.docs;
+
+                if (cartItems.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "No items in the cart",
+                      style: TextStyle(color: Colors.white),
                     ),
-                  ],
-                ),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: cartCollection.snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text("Error: ${snapshot.error}"));
-                  }
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-        
-                  var cartItems = snapshot.data!.docs;
-        
-                  if (cartItems.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        "No items in the cart",
-                        style: TextStyle(color: Colors.white),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: cartItems.length,
+                  itemBuilder: (context, index) {
+                    var item = cartItems[index];
+                    return Card(
+                      margin: const EdgeInsets.all(8.0),
+                      color: const Color.fromARGB(38, 255, 255, 255),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: ListTile(
+                        leading: Image.network(
+                          item['imageUrl'] ?? '',
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        ),
+                        title: Text(
+                          item['name'],
+                          style: const TextStyle(
+                            color: Color(0xFFFFFFFF),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['description'],
+                              style: const TextStyle(color: Color(0xFFFFFFFF)),
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Price: ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFFFFFFF),
+                                  ),
+                                ),
+                                Text(
+                                  '\$${item['price'].toStringAsFixed(2)}',
+                                  style: const TextStyle(color: Color(0xFFFFFFFF)),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Quantity: ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFFFFFFF),
+                                  ),
+                                ),
+                                Text(
+                                  '${item['quantity']}',
+                                  style: const TextStyle(color: Color(0xFFFFFFFF)),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Points: ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFFFFFFF),
+                                  ),
+                                ),
+                                Text(
+                                  '${item['points']}',
+                                  style: const TextStyle(color: Color(0xFFFFFFFF)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete,   color: Color.fromARGB(255, 165, 6, 13)),
+                          onPressed: () => _deleteItem(item.id, item['name']),
+                        ),
                       ),
                     );
-                  }
-        
-                  return ListView.builder(
-                    itemCount: cartItems.length,
-                    itemBuilder: (context, index) {
-                      var item = cartItems[index];
-                      return Card(
-                        margin: const EdgeInsets.all(8.0),
-                        color: const Color.fromARGB(38, 255, 255, 255), // Item background color
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20), // Border radius
-                        ),
-                        child: ListTile(
-                          leading: Image.network(
-                            item['imageUrl'] ?? '',
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                          ),
-                          title: Text(
-                            item['name'],
-                            style: const TextStyle(
-                              color: Color(0xFFFFFFFF),
-                              fontWeight: FontWeight.bold, // Bold product name
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['description'],
-                                style: const TextStyle(color: Color(0xFFFFFFFF)), // Font color (white)
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Price: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold, // Bold key
-                                      color: Color(0xFFFFFFFF),
-                                    ),
-                                  ),
-                                  Text(
-                                    '\$${item['price'].toStringAsFixed(2)}',
-                                    style: const TextStyle(color: Color(0xFFFFFFFF)), // Normal value
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Quantity: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold, // Bold key
-                                      color: Color(0xFFFFFFFF),
-                                    ),
-                                  ),
-                                  Text(
-                                    '${item['quantity']}',
-                                    style: const TextStyle(color: Color(0xFFFFFFFF)), // Normal value
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Points: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold, // Bold key
-                                      color: Color(0xFFFFFFFF),
-                                    ),
-                                  ),
-                                  Text(
-                                    '${item['points']}',
-                                    style: const TextStyle(color: Color(0xFFFFFFFF)), // Normal value
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.shopping_bag, color: Colors.green),
-                            onPressed: () => _buyItem(item.id, item.data() as Map<String, dynamic>, item['name']), // Buy the item
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+                  },
+                );
+              },
             ),
-            // Buttons: Delete All and Buy All
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SafeArea( // Using SafeArea to prevent overflow
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: _deleteAllItems, // Delete all items action
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFA5060D), // Red color
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20), // Button border radius
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      ),
-                      child: const Text(
-                        'Delete All',
-                        style: TextStyle(color: Color(0xFFFFFFFF)), // Button text color
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          // Fetch all cart items
-                          final cartItems = await cartCollection.get();
-        
-                          // Initialize a batch for atomic operations
-                          WriteBatch batch = FirebaseFirestore.instance.batch();
-        
-                          // Loop through each cart item
-                          for (var doc in cartItems.docs) {
-                            // Add each item to the history collection
-                            batch.set(historyCollection.doc(), doc.data());
-        
-                            // Delete each item from the cart collection
-                            batch.delete(cartCollection.doc(doc.id));
-                          }
-        
-                          // Commit the batch operation (moves all items at once)
-                          await batch.commit();
-        
-                          // Show confirmation message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('All items have been bought and moved to history')),
-                          );
-        
-                        } catch (e) {
-                          // Show error message if something goes wrong
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to buy all items: $e')),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFA5060D), // Red color
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20), // Button border radius
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      ),
-                      child: const Text(
-                        'Buy All',
-                        style: TextStyle(color: Color(0xFFFFFFFF)), // Button text color
-                      ),
-                    ),
-        
-                  ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                Text(
+                  'Total Amount: \$${_totalAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  'Total Points: $_totalPoints',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SafeArea(
+              child: ElevatedButton.icon(
+                onPressed: _checkout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 165, 6, 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                icon: const Icon(Icons.shopping_cart),
+                label: const Text(
+                  'Checkout',
+                  style: TextStyle(color: Color(0xFFFFFFFF), fontSize: 18),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

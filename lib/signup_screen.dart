@@ -214,7 +214,7 @@ class _SignupScreenState extends State<SignupScreen> {
               style: const TextStyle(color: Colors.white),
               keyboardType: TextInputType.phone,
               inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.digitsOnly, // Allow only numbers
+                FilteringTextInputFormatter.digitsOnly,
               ],
             ),
             const SizedBox(height: 20),
