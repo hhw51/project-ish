@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:red_coprative/cash_withdraw.dart';
 import 'package:red_coprative/history.dart';
+import 'package:red_coprative/user_data_service.dart'; // Import the UserDataService
 
 class Feedsscreen extends StatefulWidget {
   const Feedsscreen({super.key});
@@ -21,58 +20,18 @@ class _FeedsscreenState extends State<Feedsscreen> {
   void initState() {
     super.initState();
     fetchUserData(); // Fetch user data when the screen initializes
-    fetchUserTotalPoints(); // Fetch total points for the user
   }
 
-  // Function to fetch user data from Firestore
+  // Fetch user data using UserDataService
   Future<void> fetchUserData() async {
-    try {
-      // Get the currently logged-in user
-      User? user = FirebaseAuth.instance.currentUser;
+    UserDataService userDataService = UserDataService(); // Instantiate UserDataService
+    Map<String, dynamic>? fetchedData = await userDataService.fetchUserData(); // Fetch the user data
 
-      if (user != null) {
-        // Fetch the user's document from Firestore
-        DocumentSnapshot doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid) // Use the UID to get the document
-            .get();
-
-        // Check if the document exists and contains data
-        if (doc.exists) {
-          setState(() {
-            userData = doc.data() as Map<String, dynamic>?; // Store the data in the state
-          });
-        }
-      }
-    } catch (e) {
-      print("Error fetching user data: $e");
-    }
-  }
-
-  // Function to fetch total points of the logged-in user from Firestore
-  Future<void> fetchUserTotalPoints() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-
-      if (user != null) {
-        // Fetch the user's document from Firestore
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid) // Use the UID to get the user's document
-            .get();
-
-        // Check if the document contains totalPoints field
-        if (userDoc.exists && userDoc.data() != null) {
-          Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
-          setState(() {
-            totalPoints = data['totalPoints'] ?? 0;  // Fetch totalPoints or default to 0
-            isLoading = false; // Data has been fetched, stop showing loading indicator
-          });
-        }
-      }
-    } catch (e) {
-      print("Error fetching total points: $e");
-    }
+    setState(() {
+      userData = fetchedData;
+      totalPoints = userData?['totalPoints'] ?? 0; // Fetch totalPoints or default to 0
+      isLoading = false; // Stop showing loading indicator after data fetch
+    });
   }
 
   @override
@@ -83,8 +42,8 @@ class _FeedsscreenState extends State<Feedsscreen> {
           ? const Center(child: CircularProgressIndicator()) // Show loading indicator while data is being fetched
           : SingleChildScrollView(
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 6),
-          margin: EdgeInsets.only(top: 25),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          margin: const EdgeInsets.only(top: 25),
           child: Column(
             children: [
               // Top section with app name and QR code icon
@@ -199,6 +158,7 @@ class _FeedsscreenState extends State<Feedsscreen> {
                 ),
               ),
 
+              // Cash Withdraw and History buttons
               Container(
                 decoration: BoxDecoration(
                   color: Colors.red.shade900,

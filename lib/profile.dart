@@ -1,24 +1,27 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:red_coprative/account.dart';
-import 'package:red_coprative/login.dart';
+import 'package:red_coprative/cash_withdraw.dart';
+import 'package:red_coprative/history.dart';
 
-class Profilescreen extends StatefulWidget {
-  const Profilescreen({super.key});
+class Feedsscreen extends StatefulWidget {
+  const Feedsscreen({super.key});
 
   @override
-  State<Profilescreen> createState() => _ProfilescreenState();
+  State<Feedsscreen> createState() => _FeedsscreenState();
 }
 
-class _ProfilescreenState extends State<Profilescreen> {
-  // Create a variable to store user details
+class _FeedsscreenState extends State<Feedsscreen> {
+  // Variable to hold user data
   Map<String, dynamic>? userData;
+  num totalPoints = 0;  // Use `num` to handle both integer and decimal values
+  bool isLoading = true; // Track if data is still loading
 
   @override
   void initState() {
     super.initState();
-    fetchUserData(); // Fetch user data when the screen is initialized
+    fetchUserData(); // Fetch user data when the screen initializes
+    fetchUserTotalPoints(); // Fetch total points for the user
   }
 
   // Function to fetch user data from Firestore
@@ -31,7 +34,7 @@ class _ProfilescreenState extends State<Profilescreen> {
         // Fetch the user's document from Firestore
         DocumentSnapshot doc = await FirebaseFirestore.instance
             .collection('users')
-            .doc(user.uid) // Use UID to identify the user's document
+            .doc(user.uid) // Use the UID to get the document
             .get();
 
         // Check if the document exists and contains data
@@ -46,137 +49,264 @@ class _ProfilescreenState extends State<Profilescreen> {
     }
   }
 
+  // Function to fetch total points of the logged-in user from Firestore
+  Future<void> fetchUserTotalPoints() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // Fetch the user's document from Firestore
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid) // Use the UID to get the user's document
+            .get();
+
+        // Check if the document contains totalPoints field
+        if (userDoc.exists && userDoc.data() != null) {
+          Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+          setState(() {
+            totalPoints = data['totalPoints'] ?? 0;  // Fetch totalPoints or default to 0
+            isLoading = false; // Data has been fetched, stop showing loading indicator
+          });
+        }
+      }
+    } catch (e) {
+      print("Error fetching total points: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Container(
-        padding:const EdgeInsets.symmetric(horizontal: 6),
-        margin:const EdgeInsets.only(top: 25),
-        child: Column(
-          children: [
-            // Top section with app name and logout icon
-            Padding(
-              padding:const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon:const Icon(Icons.arrow_back, color: Colors.white, size: 32),
-                    onPressed: () {
-                      // Navigate to the Accountscreen
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => Accountscreen()),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: Image.asset("assets/profilelogout.png"),
-                    onPressed: () async {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen(),));
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 17),
-            // If the data has been fetched, display it
-            userData != null
-                ? ListTile(
-              leading:const CircleAvatar(
-                radius: 30,
-                backgroundImage: AssetImage("assets/Kid.png"),
-              ),
-              title: Text(
-                userData?['full_name'] ?? "Name not available",
-                style:const TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-              ),
-              subtitle: Row(
-                children: [
-                  const Icon(Icons.access_time_filled, color: Colors.white),
-                  Text(
-                    userData?['account_type'] ?? "Account type not available", // Dynamically display the account type
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white),
-                  )
-                ],
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator()) // Show loading indicator while data is being fetched
+          : SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 6),
+          margin: EdgeInsets.only(top: 25),
+          child: Column(
+            children: [
+              // Top section with app name and QR code icon
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "ISH NEW LIFE",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Icon(
+                      Icons.qr_code_scanner_sharp,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
               ),
 
-              trailing: Image.asset("assets/BiSolidEditAlt.png"),
-            )
-                :const CircularProgressIndicator(), // Show a loading spinner while data is being fetched
-            const SizedBox(height: 40),
-            // Display the rest of the user details
-            if (userData != null)
+              // Profile info card
               Container(
-                margin:const EdgeInsets.only(left: 25),
+                width: double.infinity,
+                color: Colors.white, // Background color of the profile section
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Profile info row
                     Row(
                       children: [
-                        const Icon(
-                          Icons.mail_outline,
-                          color:  Color.fromARGB(255, 211, 35, 23),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Dynamically display the user's name
+                              Text(
+                                userData?['full_name'] ?? "Name not available",
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color.fromARGB(255, 12, 12, 12), // Dark color for the text
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on_outlined,
+                                    color: Color.fromARGB(255, 165, 6, 13), // Location icon color
+                                  ),
+                                  const SizedBox(width: 4),
+                                  // Dynamically display the user's location
+                                  Text(
+                                    userData?['address'] ?? "Lahore",
+                                    style: const TextStyle(
+                                      color: Color.fromARGB(255, 12, 12, 12), // Text color
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // Dynamically display the user's account type
+                              Text(
+                                userData?['account_type'] ?? "Account type not available",
+                                style: const TextStyle(
+                                  color: Color.fromARGB(255, 12, 12, 12), // Text color
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: 3),
-                        Text(
-                          userData?['email'] ?? "Email not available",
-                          style:const TextStyle(color: Colors.white, fontSize: 16),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.phone,
-                          color: const Color.fromARGB(255, 211, 35, 23),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 27),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Dynamically display the user's points
+                              Text(
+                                "$totalPoints", // Display the calculated total points here
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.blur_circular_rounded,
+                                    size: 16,
+                                    color: Color.fromARGB(255, 165, 6, 13), // Icon color
+                                  ),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    "points",
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: 3),
-                        Text(
-                          userData?['phone'] ?? "Phone not available",
-                          style:const TextStyle(color: Colors.white, fontSize: 16),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.credit_card_rounded,
-                          color: Color.fromARGB(255, 211, 35, 23),
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                           userData?['cnic'] ?? "CNIC not available",
-                          style:const TextStyle(color: Colors.white, fontSize: 16),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          color: Color.fromARGB(255, 211, 35, 23),
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          userData?['address'] ?? "Address not available",
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
-                        )
                       ],
                     ),
                   ],
                 ),
-              )
-          ],
+              ),
+
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.red.shade900,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    // Cash Withdraw button
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade900, // Same red color
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(10),
+                          ), // Rounded left corners
+                        ),
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const CashWithdrawScreen(),));
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                          ),
+                          child: const Text(
+                            "Cash Withdraw",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Vertical divider
+                    Container(
+                      height: 45, // Same height as the buttons
+                      width: 1,
+                      color: Colors.white, // Divider color
+                    ),
+                    // History button
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade900, // Same red color
+                          borderRadius: const BorderRadius.only(
+                            bottomRight: Radius.circular(10),
+                          ), // Rounded right corners
+                        ),
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const Historyscreen(),));
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                          ),
+                          child: const Text(
+                            "History",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Facebook feed section with image
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.black, // Background for the image section
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 362, // Adjust the height accordingly
+                      width: 400,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage("assets/technology (1).jpg"), // Image asset
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "CAM GEAR SET FIBER CG 125",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

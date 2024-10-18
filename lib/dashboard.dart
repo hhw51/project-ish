@@ -108,15 +108,6 @@ class _DashboardscreenState extends State<Dashboardscreen> {
       // Body of the page to show the pages in PageView
       body:
          pages[currentIndex],
-      //  PageView(
-      //   controller: pageController,
-      //   onPageChanged: (value) {
-      //     setState(() {
-      //       currentIndex = value;
-      //     });
-      //   },
-      //   children: pages,
-      // ),
     );
   }
 }

@@ -25,6 +25,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Method to handle login
   Future<void> _login() async {
+    // Check if email and password fields are not empty
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email and Password cannot be empty'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
@@ -82,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20),
               TextField(
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.grey[800],
@@ -150,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Forgot Password logic
+                      // Forgot Password logic can be added here
                     },
                     child: const Text(
                       "Forgot Password?",
