@@ -95,7 +95,7 @@ class _AccountscreenState extends State<Accountscreen> {
             Container(
               width: double.infinity,
               color: Colors.white, // Background color of the profile section
-              pagit branchdding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
